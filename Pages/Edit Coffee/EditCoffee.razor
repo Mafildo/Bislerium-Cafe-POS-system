@@ -1,0 +1,82 @@
+﻿@page "/EditCoffee/{id:int}"
+
+@using Bislerium.Data.Model
+@using Bislerium.Data.Services
+@using Bislerium.UserAuthentication
+
+@inject NavigationManager NavigationManager
+
+<div class="editCoffeePriceDiv">
+
+    <h3>Edit Coffee: @coffee.CoffeeName Price</h3>
+    <!-- EditForm component of blazor for handling form submission and validation -->
+    <EditForm style="
+        display:flex;
+        flex-direction:column;
+        gap:1em;
+        border: 1px solid black;
+        padding:15px;
+        border-radius:15px;
+    " Model="@coffee" OnValidSubmit="@HandleSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div class="form-group">
+            <label for="Name">@coffee.CoffeeName Price:</label>
+            <!-- InputText component with two-way data binding to the hobby's Name property -->
+            <InputNumber id="Name" class="form-control" @bind-Value="coffee.Price" />
+        </div>
+
+        <div class="form-group">
+            <label for="AdminPassword">Admin Password:</label>
+            <InputText id="AdminPassword" type="password" class="form-control" @bind-Value="adminPassword" required/>
+        </div>
+        <!-- Submit button for saving changes -->
+        <button type="submit" class="btn btn-primary">Save</button>
+    </EditForm>
+</div>
+
+
+@code {
+    string adminPassword = "";
+
+    [Parameter] // Parameter to capture the coffee Id from the route above /EditCoffee/{Id:guid}
+    public int id { get; set; }
+
+    // Coffee object to store and edit coffee information
+    public CoffeeModel coffee;
+
+    // Initialization method runs when the component i.e. EditCoffee.razor is initialized
+    protected override void OnInitialized()
+    {
+        coffee = CoffeeServices.GetCoffeebyId(id); // Retrieve the coffee information based on the specified Id, Calling the Method from CoffeeServices class in Services Folder
+        base.OnInitialized();
+    }
+
+    // HandleSubmit method is called on form submission
+    public void HandleSubmit()
+    {
+        // Check if the admin password is correct
+        if (adminPassword == "admin")
+        {
+            try
+            {
+                // Call CoffeeServices to edit the coffee with the specified Id and updated Name by calling method EditCoffee from CoffeeServices class in Services Folder
+                CoffeeServices.EditCoffee(id, coffee.Price);
+
+                // Display a success alert and navigate back to the coffee page
+                App.Current.MainPage.DisplayAlert("Success! ✔️", "Data SuccessFully Edited!", "OK");
+                NavigationManager.NavigateTo($"/viewCoffee");
+            }
+            catch (Exception ex)
+            {
+                // Display an error alert if an exception occurs during editing
+                App.Current.MainPage.DisplayAlert("Error", $"Error Editing Coffee:{ex.Message}", "OK");
+            }
+        }
+        else
+        {
+            // Display an error alert for incorrect admin password
+            App.Current.MainPage.DisplayAlert("Error", "Incorrect admin password. You don't have permission to edit.", "OK");
+        }
+    }
+}

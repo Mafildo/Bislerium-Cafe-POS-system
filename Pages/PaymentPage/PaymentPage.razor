@@ -1,0 +1,106 @@
+﻿
+@page "/paymentPage/{id:guid}"
+
+@inject NavigationManager NavigationManager
+@using Bislerium.Data.Model
+@using Bislerium.Data.Services
+@using System;
+@using System.Text.RegularExpressions;
+
+
+ 
+<div class="paymentpage-main-div">
+<h3>Enter Payment Details</h3>
+    <div class="paymentpage-inner-div">
+        <EditForm style="
+        display:flex;
+        flex-direction:column;
+        gap:1em;
+        border: 1px solid black;
+        padding:15px;
+        border-radius:15px;
+    " Model="@payment" OnValidSubmit="@ConfirmPayment">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="form-group">
+                <!-- InputText component with two-way data binding to the customer name property -->
+                <label>Customer Name</label>
+                <InputText id="Name" class="form-control" @bind-Value="payment.CustomerName" />
+            </div>
+
+            <div class="form-group">
+                <!-- InputText component with two-way data binding to the customer phone number property -->
+                <label>Phone Number</label>
+
+                <InputText id="Name" class="form-control" @bind-Value="payment.CustomerPhone" />
+
+            </div>
+            <!-- Submit button for saving changes -->
+            <button type="submit" class="btn btn-primary">Pay Now</button>
+
+            @if (error)
+            {
+
+                <div class="invalidMessageMainDiv">
+                    <p class="invalidMessage">Please enter valid phone number!</p>
+                </div>
+            }
+        </EditForm>
+    </div>
+</div>
+@code {
+    [Parameter] 
+    public Guid id { get; set; }
+
+    // Form object to store form data
+    PaymentModel payment = new PaymentModel();
+
+
+    public OrderModel order;
+    protected override void OnInitialized()
+    {
+        order = OrderServices.GetOrderbyId(id);
+        payment.Order = OrderServices.GetOrderbyId(id); // Retrieve the order information based on the specified Id, Calling the Method from OrderServices class in Services Folder
+        base.OnInitialized();
+    }
+
+    bool error = false;
+
+
+    public async void ConfirmPayment()
+    {
+        if (payment.CustomerPhone != null && payment.CustomerPhone.Length == 10)
+        {
+            payment.Order = order;
+            payment.PaymentDate = DateTime.Now.ToString("yyyy-MM-dd");
+
+            // Check if the customer has a registered membership number
+            if (MemberServices.CustomerExists(payment.CustomerPhone))
+            {
+                // Apply a 20% discount for registered members
+                decimal discountPercentage = 0.2m; // 20% discount
+                payment.Order.DiscountedAmount = payment.Order.Total * discountPercentage;
+                payment.Order.Total -= payment.Order.DiscountedAmount;
+            }
+
+            OrderServices.EditOrder(id);
+
+            // Save form data to JSON file
+            PaymentServices.SavePaymentDataInJson(payment);
+
+            // Reset the form object
+            payment = new PaymentModel();
+
+            // Navigate to the FormData page
+            NavigationManager.NavigateTo("/paidOrder");
+
+            // Display a success alert
+            await App.Current.MainPage.DisplayAlert("Payment Successful", "Payment Completed. Your payment has been recorded.", "OK");
+        }
+        else
+        {
+            error = true;
+        }
+    }
+
+}

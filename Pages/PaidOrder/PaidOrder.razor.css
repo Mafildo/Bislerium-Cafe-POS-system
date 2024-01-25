@@ -1,0 +1,46 @@
+﻿
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
+}
+
+th {
+    background-color: darkslateblue;
+    color: white;
+    font-weight: 500;
+}
+
+.action {
+    text-align: center;
+}
+
+.paidOrder-main-div {
+    flex: 1;
+}
+
+
+.btnnnn {
+    border: 1px solid white;
+    border-radius: 12px;
+    width: 13em;
+    padding: 15px;
+}
+
+    .btnnnn:hover {
+        background-color: crimson;
+        color: white;
+        transition: 0.2s ease-in-out;
+    }
+
+.paidorderInner {
+    display: flex;
+    justify-content: space-between;
+}

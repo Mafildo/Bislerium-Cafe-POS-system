@@ -1,0 +1,12 @@
+﻿.viewAddins-main-div
+{
+    width:100%;
+    display:flex;
+    flex-direction:column;
+}
+
+.viewAddins-inner-div{
+    display:flex;
+    flex-direction:column;
+    flex:1;
+}

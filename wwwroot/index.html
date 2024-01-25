@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Bislerium</title>
+    <base href="/" />
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link href="css/app.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="Bislerium.styles.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/2643f4eebb.js" crossorigin="anonymous"></script>
+</head>
+
+<body>
+
+    <div class="status-bar-safe-area"></div>
+
+    <div id="app">Loading...</div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+
+    <script src="_framework/blazor.webview.js" autostart="false"></script>
+
+    <script>
+        // JavaScript code defining a window.multiselect object.
+        // This object contains a method getSelectedValues to retrieve selected values from a multi-select dropdown.
+        window.multiselect = {
+            // getSelectedValues method takes an 'id' parameter representing the id of the multi-select dropdown.
+            getSelectedValues: (id) => {
+                // Retrieve the select element using the provided 'id'.
+                var select = document.getElementById(id);
+                // Use Array.from to convert the HTMLCollection of options to an array.
+                // Filter the array to include only selected options.
+                var selectedOptions = Array.from(select.options)
+                    .filter(option => option.selected)
+                    // Map the array to extract the values of selected options.
+                    .map(option => option.value);
+                // Return an array of selected option values.
+                return selectedOptions;
+            }
+        };
+    </script>
+</body>
+
+</html>

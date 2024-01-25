@@ -1,0 +1,131 @@
+﻿@page "/addMember"
+@using Bislerium.Data.Model
+@using Bislerium.Data.Services
+@using Bislerium.Data.Utils
+@using Newtonsoft.Json;
+
+
+
+@inject NavigationManager NavigationManager
+
+<div class="addMember-main-div">
+    <h3>Add Member</h3>
+    <!-- EditForm for capturing member information -->
+    <EditForm Model="@member" OnValidSubmit="@RegisterMember"
+              style="
+        display:flex;
+        flex-direction:column;
+        background-color: #fff;
+        padding: 20px;
+        gap:0.8em;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        width: 20em;
+        ">
+        <!-- Validation components -->
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <!-- Input fields for member details -->
+        <label for="memberName">Member Name:</label>
+        <InputText id="memberName" @bind-Value="member.Name" required />
+
+        <label for="phoneNumber">Phone Number:</label>
+        <InputText id="phoneNumber" @bind-Value="member.PhoneNumber" required />
+
+        <!-- Submit button -->
+        <button type="submit">Add Member</button>
+
+        <!-- Display error message if there is an error -->
+        @if (error)
+        {
+            <div class="invalidMessageMainDiv">
+                <p class="invalidMessage">@errorMessage</p>
+            </div>
+        }
+    </EditForm>
+</div>
+
+@code {
+    // Member model to capture input data
+    MemberModel member = new MemberModel();
+
+    // Flag to track if there is an error
+    bool error = false;
+
+    // Error message
+    string errorMessage = "";
+
+    // Method to register a member
+    public async void RegisterMember()
+    {
+        // Check if member name is not null and phone number is of valid length
+        if (member.Name != null && member.PhoneNumber.Length == 10)
+        {
+            // Check if the customer with the same phone number already exists
+            if (CustomerExists(member.PhoneNumber))
+            {
+                // Customer with the same phone number is already registered
+                error = true;
+                errorMessage = "This phone number is already registered!";
+                return;
+            }
+
+            // Save member data in JSON
+            MemberServices.SaveMemberDataInJson(member);
+
+            // Navigate to the addMember page
+            NavigationManager.NavigateTo("/ViewMember");
+
+            // Reset member model for a new entry
+            member = new MemberModel();
+
+            // Reset error flag and message
+            error = false;
+            errorMessage = "";
+
+            // Display success alert
+            await App.Current.MainPage.DisplayAlert("Member Added Successfully! ✔️", "Member Added To Json", "OK");
+        }
+        else
+        {
+            // Set error flag if there is an issue with input data
+            error = true;
+            errorMessage = "Please enter a valid phone number!";
+        }
+    }
+
+    // Check if a customer with the same phone number already exists
+    private bool CustomerExists(string phoneNumber)
+    {
+        // Replace 'path/to/your/file.json' with the actual path to your JSON file
+        string jsonFilePath = Utils.MemberFilePath();
+
+        try
+        {
+            // Read the existing JSON data from the file
+            string existingJsonData = File.ReadAllText(jsonFilePath);
+
+            // If the existingJSONData variable is empty, no customers are registered.
+            if (string.IsNullOrEmpty(existingJsonData))
+            {
+                return false;
+            }
+
+            // Deserialize the existing JSON data into a list of MemberModel objects
+            List<MemberModel> registeredMembers = JsonConvert.DeserializeObject<List<MemberModel>>(existingJsonData);
+
+            // Check if any member has the provided phone number
+            return registeredMembers?.Any(m => m.PhoneNumber == phoneNumber) ?? false;
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions by displaying an alert with the error message.
+            Console.WriteLine($"Error reading JSON file: {ex.Message}");
+            App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+
+            // Return false if an error occurs (customer not found due to the error)
+            return false;
+        }
+    }
+}

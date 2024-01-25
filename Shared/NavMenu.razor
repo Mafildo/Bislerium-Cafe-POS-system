@@ -1,0 +1,95 @@
+﻿@using Bislerium.UserAuthentication
+@using Bislerium.Pages.EditAddIns
+
+@inject NavigationManager NavigationManager;
+
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">🍵Bislerium Cafe</a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    <div class="main-div">
+            <div class="flex-column">
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
+                        <i class="fa-solid fa-house"></i> Home
+                    </NavLink>
+                </div>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="makeOrder">
+                        <i class="fa-solid fa-mug-saucer"></i> Make Order
+                    </NavLink>
+                </div>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="viewOrder">
+                        <i class="fa-solid fa-eye"></i>View Order
+                    </NavLink>
+                </div>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="paidOrder">
+                        <i class="fa-solid fa-brands fa-paypal"></i>Paid Order
+                    </NavLink>
+                </div>
+
+            @if (UserAuthentication.userAuth.role == "admin")
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="viewCoffee">
+                        <i class="fa-solid fa-regular fa-pen-to-square"></i>Edit Coffee
+                    </NavLink>
+                </div>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="viewAddins">
+                        <i class="fa-solid fa-plus"></i>Edit AddIns
+                    </NavLink>
+                </div>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="addMember">
+                        <i class="fa-solid fa-user"></i>Add Member
+                    </NavLink>
+                </div>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="ViewMember">
+                        <i class="fa-solid fa-eye"></i>View Member
+                    </NavLink>
+                </div>
+            }
+        </div>
+
+            <div class="inner-div">
+                <div class="nav-item px-3" @onclick="Logout">
+                    <NavLink class="nav-link" href="Login">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>Logout
+                    </NavLink>
+                </div>
+            </div>
+    </div>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    public void Logout()
+    {
+        userAuth.role = "";
+    }
+}

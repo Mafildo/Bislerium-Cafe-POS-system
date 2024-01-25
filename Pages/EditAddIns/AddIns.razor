@@ -1,0 +1,87 @@
+﻿<!-- Razor page for editing a hobby with a specified Id -->
+@page "/EditAddins/{id:int}"
+
+
+
+<!-- Inject the NavigationManager Service for page navigation -->
+@inject NavigationManager NavManager
+@using Bislerium.Data.Services
+@using Bislerium.Data.Model
+
+<div class="editAddinsPriceDiv">
+
+    <h3>Edit Addin: @addin.Name Price</h3>
+    <!-- EditForm component of blazor for handling form submission and validation -->
+    <EditForm style="
+        display:flex;
+        flex-direction:column;
+        gap:1em;
+        border: 1px solid black;
+        padding:15px;
+        border-radius:15px;
+    " Model="@addin" OnValidSubmit="@HandleSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div class="form-group">
+            <label for="Name">@addin.Name Price:</label>
+            <!-- InputText component with two-way data binding to the hobby's Name property -->
+            <InputNumber id="Name" class="form-control" @bind-Value="addin.Price" />
+        </div>
+
+        <div class="form-group">
+            <label for="AdminPassword">Admin Password:</label>
+            <InputText id="AdminPassword" type="password" class="form-control" @bind-Value="adminPassword" required />
+        </div>
+        <!-- Submit button for saving changes -->
+        <button type="submit" class="btn btn-primary">Save</button>
+    </EditForm>
+</div>
+
+
+
+@code {
+
+
+    string adminPassword = "";
+
+    [Parameter] // Parameter to capture the hobby Id from the route above /EditHobby/{Id:guid}
+    public int id { get; set; }
+
+    // Hobby object to store and edit addins information
+    public AddInModel addin;
+
+    // Initialization method runs when the component i.e. EditHobby.razor is initialized
+    protected override void OnInitialized()
+    {
+        addin = AddInsServices.GetAddinsbyId(id); // Retrieve the hobby information based on the specified Id, Calling the Method from HobbyServices class in Services Folder
+        base.OnInitialized();
+    }
+
+    // HandleSubmit method is called on form submission
+    public void HandleSubmit()
+    {
+        if(adminPassword == "admin")
+        {
+            try
+            {
+                // Call HobbyServices to edit the hobby with the specified Id and updated Name by calling method EditHobby from HobbyServices class in Services Folder
+                AddInsServices.EditAddins(id, addin.Price);
+
+                // Display a success alert and navigate back to the Addins page
+                App.Current.MainPage.DisplayAlert("Success! ✔️", "Data SuccessFully Edited!", "OK");
+                NavManager.NavigateTo($"/ViewAddins");
+            }
+            catch (Exception ex)
+            {
+                // Display an error alert if an exception occurs during editing
+                App.Current.MainPage.DisplayAlert("Error", $"Error Editing Addins:{ex.Message}", "OK");
+            }
+        }
+        else
+        {
+            // Display an error alert for incorrect admin password
+            App.Current.MainPage.DisplayAlert("Error", "Incorrect admin password. You don't have permission to edit.", "OK");
+        }
+
+    }
+}

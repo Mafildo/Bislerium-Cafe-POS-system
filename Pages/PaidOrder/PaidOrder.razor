@@ -1,0 +1,193 @@
+﻿@page "/paidOrder"
+@using Bislerium.Data.Services
+
+@using IronPdf;
+@using System.IO;
+
+<div class="paidOrder-main-div">
+
+    <div class="paidorderInner">
+        <h3>Paid Order</h3>
+        <button class="btnnnn" @onclick="DownloadPdf">Download PDF Report</button>
+    </div>
+
+
+    <table>
+        <thead>
+            <tr>
+                <th>Customer Name</th>
+                <th>Phone Number</th>
+                <th>Coffee Name</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Addins</th>
+                <th>Discounted Price</th>
+                <th>Total Price</th>
+                <th>Payment Date</th>
+            </tr>
+        </thead>
+        <tbody>
+
+
+            @foreach (var paymentData in PaymentServices.RetrievePaymentData())
+            {
+                <tr>
+                    <!-- Display basic form data -->
+                    <td>@paymentData.CustomerName</td>
+                    <td>@paymentData.CustomerPhone</td>
+                    <td>@paymentData.Order.Coffee.CoffeeName</td>
+                    <td>@paymentData.Order.Quantity</td>
+                    <td>$ @paymentData.Order.Coffee.Price</td>
+                    <td>
+                        <!-- Check if addins exist -->
+                        @if (paymentData.Order.AddIns != null && paymentData.Order.AddIns.Any())
+                        {
+                            <!-- Display orders in a list -->
+                            @foreach (var order in paymentData.Order.AddIns)
+                            {
+                                <p>@order.Name, </p>
+                            }
+                        }
+                        else
+                        {
+                            <!-- Display a message if no addins -->
+                            <span>No Addins</span>
+                        }
+                    </td>
+                    <td>$@paymentData.Order.DiscountedAmount</td>
+                    <td>$@paymentData.Order.Total</td>
+                    <td>@paymentData.PaymentDate</td>
+
+                </tr>
+            }
+            <!-- Add more rows as needed -->
+        </tbody>
+    </table>
+
+</div>
+
+@code {
+
+    //Download PDF function
+    int oid = 1;
+    public void DownloadPdf()
+    {
+        try
+        {
+            var paymentDataList = PaymentServices.RetrievePaymentData();
+            if (paymentDataList != null && paymentDataList.Any())
+            {
+                //create a pdf document
+                //var pdf = new ChromePdfRenderer();
+
+                var pdf = new ChromePdfRenderer();
+
+                var style = "<style>";
+                style += "body { font-family: 'Poppins', sans-serif; }";  // Set Poppins as the font-family
+                style += "table th,table td{border:1px solid #ddd;padding: 8px 10px; text-align:right;}";
+                style += "table th{background-color: #f2f2f2;color: #333;font-weight: bold;}";
+                style += "table span{color: #176B87;}";
+                style += "table tbody tr:nth-child(even){background-color: #f9f9f9;}";
+                style += ".empty-table{width: 100%;height:100px;display:flex;align-items:center;justify-content: center;background: rgba(0,0,0,0.05);}";
+                style += "</style>";
+
+                //HTML table for PDF
+                var tableHtml = "<table><h2>Bislerium Cafe Daily Revenue Report</h2><thead><tr><th>Coffee Name</th><th>Quantity</th><th>Unit Price</th><th>AddIns</th><th>Discount Amount</th><th>Total Price</th><th>Customer Name</th><th>Phone Number</th><th>Payment Date</th></tr></thead><tbody>";
+
+                //Add data to the table
+                // Loop through form data to add to the PDF table
+                foreach (var paymentData in paymentDataList)
+                {
+                    tableHtml += "<tr>";
+                    tableHtml += $"<td>{paymentData.Order.Coffee.CoffeeName}</td><td>{paymentData.Order.Quantity}</td><td>{paymentData.Order.Coffee.Price}</td>";
+                    tableHtml += "<td>";
+
+                    // Check if hobbies exist for the current form data
+                    if (paymentData.Order.AddIns != null && paymentData.Order.AddIns.Any())
+                    {
+                        tableHtml += "<ul>";
+                        // Loop through hobbies and add to the PDF table
+
+                        foreach (var addins in paymentData.Order.AddIns)
+                        {
+                            tableHtml += $"{addins.Name}<br>";
+                        }
+
+                        tableHtml += "</ul>";
+                    }
+                    else
+                    {
+                        // Display a message if no addins
+                        tableHtml += "<span style=\"color: black;\">No Addins!</span>";
+
+                    }
+
+                    tableHtml += $"<td>${paymentData.Order.DiscountedAmount}</td><td>${paymentData.Order.Total}</td><td>{paymentData.CustomerName}</td><td>{paymentData.CustomerPhone}</td><td>{paymentData.PaymentDate}</td></tr>";
+                }
+                tableHtml += "</tbody></table>";
+
+                // Append section for the 5 most sold coffees
+                tableHtml += "<h2>Top 5 Sold Coffees</h2><table><thead><tr><th>Coffee Name</th><th>Total Quantity Sold</th></tr></thead><tbody>";
+
+                // Get the 5 most sold coffees
+                var top5SoldCoffees = paymentDataList
+                    .GroupBy(p => p.Order.Coffee.CoffeeName)
+                    .Select(g => new { CoffeeName = g.Key, TotalQuantitySold = g.Sum(p => p.Order.Quantity) })
+                    .OrderByDescending(g => g.TotalQuantitySold)
+                    .Take(5);
+
+                foreach (var coffee in top5SoldCoffees)
+                {
+                    tableHtml += $"<tr><td>{coffee.CoffeeName}</td><td>{coffee.TotalQuantitySold}</td></tr>";
+                }
+
+                tableHtml += "</tbody></table>";
+
+                // Append section for the 5 most used add-ins
+                tableHtml += "<h2>Top 5 Used Add-Ins</h2><table><thead><tr><th>Add-In Name</th><th>Total Quantity Used</th></tr></thead><tbody>";
+
+                // Get the 5 most used add-ins
+                // Group orders by AddIn and calculate the total quantity used for each AddIn
+                var top5usedAddIns = paymentDataList
+                    .SelectMany(pd => pd.Order.AddIns)  // Flatten AddIns from each order
+                    .GroupBy(addIn => addIn.Name)      // Group by AddIn name
+                    .Select(g => new { AddInName = g.Key, TotalQuantityUsed = g.Count() })  // Count occurrences for each AddIn
+                    .OrderByDescending(g => g.TotalQuantityUsed)  // Order by the total quantity used in descending order
+                    .Take(5)  // Take the top 5 AddIns
+                    .ToList();
+
+
+                foreach (var addIn in top5usedAddIns)
+                {
+                    tableHtml += $"<tr><td>{addIn.AddInName}</td><td>{addIn.TotalQuantityUsed}</td></tr>";
+                }
+
+                tableHtml += "</tbody></table>";
+
+                
+
+                //Convert HTML to Pdf
+                var pdfStream = pdf.RenderHtmlAsPdf(style+tableHtml).Stream;
+
+                // Save the PDF Inside the folder
+                string pdfPath = @"C:\Users\Anish Shrestha\OneDrive\Desktop\C#Cousework";
+
+                using (var fileStream = new System.IO.FileStream(Path.Combine(pdfPath, "OrderData.pdf"), System.IO.FileMode.Create))
+
+                //Combining file FormData.pdf with directory and also creating the pdf file at the same time using FileMode inbuilt class of .net and its method and finally storing it in variable fileStream
+                {
+                    pdfStream.CopyToAsync(fileStream); //copying the data of pdf inside application to the pdf created in your device
+
+                    // Show notification
+                    App.Current.MainPage.DisplayAlert("Success ✔️", "File Downloaded Successfully!", "Ok");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+            App.Current.MainPage.DisplayAlert("Error", $"File Downloaded {ex}", "Ok");
+
+        }
+    }
+}

@@ -1,0 +1,11 @@
+﻿.viewMembers-main-div {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.viewMembers-inner-div {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}

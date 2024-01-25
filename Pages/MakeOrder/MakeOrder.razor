@@ -1,0 +1,145 @@
+﻿<!-- Razor page for creating a form with multiple hobbies -->
+@page "/makeOrder"
+@using Bislerium.Data.Model
+@using Bislerium.Data.Services
+@inject IJSRuntime JSRuntime
+
+<!-- Inject the NavigationManager Services for page navigation -->
+@inject NavigationManager NavigationManager
+<div class="makeOrder-main-div">
+
+<!-- EditForm component of Blazor for handling form submission and validation -->
+<EditForm Model="@order" OnValidSubmit="@HandleSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+        <h4 style="color: #4f277c">Place an Order</h4>
+
+
+        <div class="search-container">
+            <input type="text" class="search-input"
+            style="
+            border:2px solid purple;
+            border-radius: 13px;
+            "
+            id="coffeeSearch" placeholder="Search for coffees...">
+            <ul class="search-results" id="searchResults"></ul>
+        </div>
+
+    <div class="makeOrder-inner-div">
+
+            <div class="form-group">
+                <label for="CoffeeName">Coffee:</label>
+                <!-- InputText component with two-way data binding to the FirstName property -->
+                <select class="form-control" @onchange="getCoffee">
+                    @foreach (var coffee in CoffeeServices.RetrieveCoffeeData())
+                    {
+                        <option  value="@coffee.Id">@coffee.CoffeeName - $@coffee.Price</option>
+                    }
+                </select>
+
+            </div>
+
+            <div class="form-group">
+                <label for="Quantity">Quantity:</label>
+                <!-- InputText component with two-way data binding to the Email property -->
+                <InputNumber id="Quantity" class="form-control" @bind-Value="order.Quantity" />
+            </div>
+
+
+            <div class="form-group">
+                <label for="AddIns">Extras:</label>
+                <!-- Select component for displaying and selecting multiple hobbies -->
+                <select id="SelectAddins" multiple>
+                    @foreach (var addins in AddInsServices.RetrieveAddinData())
+                    {
+                        <option value="@addins.Id">@addins.Name</option>
+                    }
+                </select>
+
+            </div>
+
+           <div class="button-div">
+                <button type="submit" class="btn btn-primary">Order</button>
+
+           </div>
+            
+
+    </div>
+        
+    <br />
+    <!-- Submit button for form submission -->
+</EditForm>
+</div>
+
+@code {
+    CoffeeModel coffee;
+
+    public void getCoffee(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int coffeeId))
+        {
+            coffee = coffeeList.FirstOrDefault(c => c.Id == coffeeId);  
+        }
+    }
+
+    public List<CoffeeModel> coffeeList = new List<CoffeeModel>();
+    public List<AddInModel> AddIns = new List<AddInModel>();
+    OrderModel order = new OrderModel();
+
+
+    public List<int> selectedAddins = new List<int>();
+
+    protected override void OnInitialized()
+    {
+        coffeeList = CoffeeServices.RetrieveCoffeeData();
+        order.Coffee = coffeeList.FirstOrDefault();
+        coffee = coffeeList.FirstOrDefault();
+        order.Quantity = 1;
+        AddIns = AddInsServices.RetrieveAddinData();
+        base.OnInitialized();
+
+    }
+    // Form object to store form data
+
+
+
+    // HandleSubmit method is called on form submission
+    public async void HandleSubmit()
+    {
+        order.Coffee = coffee;
+        order.PaymentStatus = false;
+        // Use JavaScript interop to get the selected hobby Ids from the multiselect JavaScript function
+        var selectedAddins = await JSRuntime.InvokeAsync<List<string>>("multiselect.getSelectedValues", "SelectAddins");
+
+        // Map selected hobby Ids to Hobby objects and assign them to the form's Hobbies property
+        order.AddIns = selectedAddins.Select(id =>
+        new AddInModel
+            {
+                Id = int.Parse(id),
+                Name = AddIns.FirstOrDefault(h => h.Id == int.Parse(id))?.Name,
+                Price = AddIns.FirstOrDefault(h => h.Id == int.Parse(id))?.Price ?? 0
+
+            }).ToList();
+
+        decimal addinsTotal = 0;
+        foreach(var addins in order.AddIns)
+        {
+            addinsTotal += addins.Price;
+        }
+        order.Total = order.Coffee.Price * order.Quantity + addinsTotal;
+
+
+        // Save form data to JSON file
+        OrderServices.SaveOrderDataInJson(order);
+        // Reset the form object
+        order = new OrderModel();
+
+
+        // Navigate to the FormData page
+        NavigationManager.NavigateTo("/viewOrder");
+
+        // Display a success alert
+        await App.Current.MainPage.DisplayAlert("Form Added", "Form Added To Json", "OK");
+    }
+}

@@ -1,0 +1,64 @@
+﻿@page "/ViewAddins"
+@using Bislerium.Data.Services
+
+
+<div class="viewAddins-main-div">
+    <h3>View Addins</h3>
+   <div class="viewAddins-inner-div">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Addins Name</th>
+                    <th>Price</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Loop through each addin data -->
+                @foreach (var addinsData in AddInsServices.RetrieveAddinData())
+                {
+                    <tr>
+                        <!-- Display addin ID and Name -->
+                        <td>@addinsData.Id</td>
+                        <td>@addinsData.Name</td>
+                        <td>$ @addinsData.Price</td>
+                        <td>
+                            <!-- Button to navigate to the EditHobby page with the specific hobby ID -->
+                            <button type="submit" @onclick="@(()=>EditAddins(addinsData.Id))" class="btn btn-primary">Edit</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+   </div>
+</div>
+
+@code {
+    // Inject NavigationManager for navigation purposes
+    [Inject]
+    private NavigationManager NManager { get; set; }
+
+    // Initialize the page on start
+    protected override void OnInitialized()
+    {
+        // Inject sample addin data to ensure some data exists
+        AddInsServices.InjectSampleAddinsData();
+        base.OnInitialized();
+    }
+
+    // Method to navigate to the EditAddin page with a specific addin Id
+    public void EditAddins(int id)
+    {
+        try
+        {
+            // Navigate to the EditAddin page with the specific addin ID
+            NManager.NavigateTo($"/EditAddins/{id}");
+        }
+        catch (Exception ex)
+        {
+            // Handle any navigation errors
+            Console.WriteLine($"Error Navigating:{ex.Message}");
+        }
+    }
+}

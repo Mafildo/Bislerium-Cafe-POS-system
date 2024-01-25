@@ -1,0 +1,65 @@
+﻿@page "/ViewMember";
+
+@using Bislerium.Data.Services
+@using Bislerium.Data.Model
+
+
+
+<div class="viewMembers-main-div">
+    <h3>View Member</h3>
+    <div class="viewMembers-inner-div">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Member Name</th>
+                    <th>Phone Number</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Loop through each member data -->
+                @foreach (var membersData in MemberServices.RetrieveMemberData())
+                {
+                    <tr>
+                        <!-- Display member Name and Phone number-->
+                        <td>@membersData.Name</td>
+                        <td>@membersData.PhoneNumber</td>
+
+                        <!-- Delete button -->
+                        <td>
+                            <button style="
+                             border: none;
+                             background-color:white;
+                             font-size:1.2em;
+                            " @onclick="() => DeleteMember(membersData)"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+@code {
+    // Method to delete a member
+    public async Task DeleteMember(MemberModel member)
+    {
+        try
+        {
+            // Implement the logic to delete the member from your data source (e.g., JSON file)
+            await MemberServices.DeleteMember(member);
+
+
+            // Refresh the view after deletion
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            // Log or display the exception message
+            Console.WriteLine($"Error deleting member: {ex.Message}");
+            throw; // Rethrow the exception if needed
+        }
+    }
+
+}

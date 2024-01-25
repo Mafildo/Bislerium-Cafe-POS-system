@@ -1,0 +1,13 @@
+﻿.paymentpage-main-div
+{
+    display:flex;
+    flex-direction:column;
+    border:1px solid black;
+    border-radius: 15px;
+    padding:15px;
+}
+
+
+.paymentpage-inner-div form{
+    
+}
